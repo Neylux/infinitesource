@@ -9,10 +9,12 @@ import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ModelProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.MultiRegistryBootstrap;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.loot.BlockLootSubProvider;
+import net.minecraft.data.loot.LootTableProvider;
 import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
@@ -23,6 +25,7 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.Tags;
@@ -32,38 +35,39 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @EventBusSubscriber(modid = InfiniteSource.MOD_ID)
 public final class DataGenerators {
+
+    private static RegistrySetBuilder reloadableRegistries() {
+        return new RegistrySetBuilder().add(Registries.LOOT_TABLE, new GeneratorLootTables()).add(GeneratorRecipes.create());
+    }
+
     @SubscribeEvent
-    public static void gatherData(GatherDataEvent event) {
+    public static void gatherClientData(GatherDataEvent.Client event) {
         var generator = event.getGenerator();
         var packOutput = generator.getPackOutput();
-        var lookupProvider = event.getReloadableLookupProvider();
+        var lookupProvider = event.getWorldLookupProvider();
 
+        event.createReloadableRegistryObjects(reloadableRegistries());
+
+        generator.addProvider(true, new GeneratorBlockTags(packOutput, lookupProvider));
         generator.addProvider(true, new GeneratorModels(packOutput));
         generator.addProvider(true, new GeneratorLanguage(packOutput));
-        //generator.addProvider(true, new GeneratorLootTables(lookupProvider));
-        /*
-        generator.addProvider(true, new LootTableProvider(
-                packOutput,
-                Set.of(),
-                List.of(
-                        new LootTableProvider.SubProviderEntry(GeneratorLootTables::new, LootContextParamSets.BLOCK)
-                ),
-                lookupProvider
-        ));
+    }
 
-        // Register MultiRegistryBootstrap (Recipes + Advancements)
-        generator.addProvider(true, new DatapackBuiltinEntriesProvider(
-                packOutput,
-                lookupProvider,
-                new RegistrySetBuilder().add(GeneratorRecipes.create()),
-                Set.of(InfiniteSource.MOD_ID)
-        ));
-         */
+    @SubscribeEvent
+    public static void gatherServerData(GatherDataEvent.Server event) {
+        var generator = event.getGenerator();
+        var packOutput = generator.getPackOutput();
+        var lookupProvider = event.getWorldLookupProvider();
+
+        event.createReloadableRegistryObjects(reloadableRegistries());
+
         generator.addProvider(true, new GeneratorBlockTags(packOutput, lookupProvider));
     }
 
@@ -95,47 +99,53 @@ public final class DataGenerators {
         }
     }
 
-    static class GeneratorLootTables extends BlockLootSubProvider {
+    static class GeneratorLootTables extends LootTableProvider {
 
-        public GeneratorLootTables(LootTableSubProvider.Context context) {
-            super(Set.of(), FeatureFlags.REGISTRY.allFlags(), context);
+        public GeneratorLootTables() {
+            super(Collections.emptySet(), List.of(new SubProviderEntry(BlockLootProvider::new, LootContextParamSets.BLOCK)));
         }
 
-        @Override
-        protected void generate() {
-            dropSelf(ModBlocks.INFINITE_WATER_BLOCK.get());
-        }
+        static class BlockLootProvider extends BlockLootSubProvider {
 
-        @Override
-        public Iterable<Block> getKnownBlocks() {
-            return new ArrayList<>(ModSetup.BLOCKS.getEntries().stream().map(DeferredHolder::get).toList());
+            public BlockLootProvider(LootTableSubProvider.Context context) {
+                super(Collections.emptySet(), FeatureFlags.REGISTRY.allFlags(), context);
+            }
+
+            @Override
+            protected void generate() {
+                dropSelf(ModBlocks.INFINITE_WATER_BLOCK.get());
+            }
+
+            @Override
+            public Iterable<Block> getKnownBlocks() {
+                return new ArrayList<>(ModSetup.BLOCKS.getEntries().stream().map(DeferredHolder::get).toList());
+            }
         }
     }
 
     static class GeneratorRecipes extends RecipeProvider {
 
-        protected GeneratorRecipes(BootstrapContext<Recipe<?>> recipeOutput, BootstrapContext<Advancement> advancementOutput) {
+        public GeneratorRecipes(BootstrapContext<Recipe<?>> recipeOutput, BootstrapContext<Advancement> advancementOutput) {
             super(recipeOutput, advancementOutput);
-        }
-
-        @Override
-        protected void buildRecipes() {
-            this.shaped(RecipeCategory.MISC, ModBlocks.INFINITE_WATER_BLOCK.get()).define('i', Tags.Items.GLASS_BLOCKS).define('r', Items.WATER_BUCKET).define('d', Tags.Items.GEMS_DIAMOND).pattern("iii").pattern("rdr").pattern("iii").unlockedBy("has_diamonds", has(Tags.Items.GEMS_DIAMOND)).save(this.output);
         }
 
         public static MultiRegistryBootstrap create() {
             return new MultiRegistryBootstrap() {
                 @Override
                 public Set<ResourceKey<? extends Registry<?>>> requestedRegistries() {
-                    // Return the registries we are adding entries to.
                     return Set.of(Registries.RECIPE, Registries.ADVANCEMENT);
                 }
 
                 @Override
-                public void run(BootstrapGetter registries) {
+                public void run(MultiRegistryBootstrap.BootstrapGetter registries) {
                     new GeneratorRecipes(registries.get(Registries.RECIPE), registries.get(Registries.ADVANCEMENT)).buildRecipes();
                 }
             };
+        }
+
+        @Override
+        protected void buildRecipes() {
+            this.shaped(RecipeCategory.MISC, ModBlocks.INFINITE_WATER_BLOCK.get()).define('i', Tags.Items.GLASS_BLOCKS).define('r', Items.WATER_BUCKET).define('d', Tags.Items.GEMS_DIAMOND).pattern("iii").pattern("rdr").pattern("iii").unlockedBy("has_diamonds", has(Tags.Items.GEMS_DIAMOND)).save(this.output);
         }
     }
 

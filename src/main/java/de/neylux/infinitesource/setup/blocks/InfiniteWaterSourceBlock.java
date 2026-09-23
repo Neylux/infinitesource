@@ -24,7 +24,7 @@ public class InfiniteWaterSourceBlock extends BaseEntityBlock {
 
     @Override
     public @Nullable BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
-        return null;
+        return new InfiniteWaterBlockEntity(blockPos, blockState);
     }
 
     /* TODO: Don't really need ticker (only for push configuration)

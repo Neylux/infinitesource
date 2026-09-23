@@ -20,10 +20,6 @@ public class InfiniteWaterBlockEntity extends BlockEntity {
         super(ModBlockEntities.INFINITE_WATER_BLOCK_ENTITY.get(), worldPosition, blockState);
     }
 
-    public ResourceHandler<FluidResource> getFluidHandler() {
-        return this.handler;
-    }
-
     public static void tick(Level level, BlockPos pos, BlockState state, InfiniteWaterBlockEntity blockEntity) {
         if (level.isClientSide()) return;
 
@@ -52,13 +48,15 @@ public class InfiniteWaterBlockEntity extends BlockEntity {
                             tx                            // Pass the active transaction reference
                     );
 
-                    // If fluid was successfully transferred, finalize and commit changes
                     if (moved > 0) {
                         tx.commit();
                     }
-                    // If moved is 0 (pipe is full), tx closes naturally and safely discards
                 }
             }
         }
+    }
+
+    public ResourceHandler<FluidResource> getFluidHandler() {
+        return this.handler;
     }
 }

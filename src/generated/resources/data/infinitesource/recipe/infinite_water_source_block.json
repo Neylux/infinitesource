@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "key": {
+    "d": "#c:gems/diamond",
+    "i": "#c:glass_blocks",
+    "r": "minecraft:water_bucket"
+  },
+  "pattern": [
+    "iii",
+    "rdr",
+    "iii"
+  ],
+  "result": {
+    "id": "infinitesource:infinite_water_source_block"
+  }
+}
