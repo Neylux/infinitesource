@@ -11,10 +11,7 @@ public class ModTabs {
             InfiniteSource.MOD_ID, () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + InfiniteSource.MOD_ID))
                     .icon(() -> ModBlocks.INFINITE_WATER_BLOCK.get().asItem().getDefaultInstance())
-                    .displayItems(((_, output) -> {
-                        ModSetup.BLOCKS.getEntries().forEach(e -> output.accept(e.get()));
-                        ModSetup.ITEMS.getEntries().forEach(e -> output.accept(e.get()));
-                    }))
+                    .displayItems(((_, output) -> ModSetup.ITEMS.getEntries().forEach(e -> output.accept(e.get()))))
                     .build());
 
     public static void setup() {
