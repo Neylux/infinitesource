@@ -5,6 +5,7 @@ import de.neylux.infinitesource.setup.blocks.InfiniteWaterBlockEntity;
 import de.neylux.infinitesource.setup.types.ModBlockEntities;
 import de.neylux.infinitesource.setup.types.ModBlocks;
 import de.neylux.infinitesource.setup.types.ModItems;
+import de.neylux.infinitesource.setup.types.ModTabs;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
@@ -24,16 +25,18 @@ public class ModSetup {
         BLOCKS.register(modEventBus);
         ITEMS.register(modEventBus);
         BLOCK_ENTITIES.register(modEventBus);
+        CREATIVE_TABS.register(modEventBus);
 
         ModBlocks.setup();
         ModItems.setup();
         ModBlockEntities.setup();
+        ModTabs.setup();
 
         modEventBus.addListener(ModSetup::registerCapabilities);
     }
 
     private static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlock(Capabilities.Fluid.BLOCK, ((level, pos, state, blockEntity, context) -> {
+        event.registerBlock(Capabilities.Fluid.BLOCK, ((_, _, _, blockEntity, _) -> {
             if (blockEntity instanceof InfiniteWaterBlockEntity) {
                 return ((InfiniteWaterBlockEntity) blockEntity).getFluidHandler();
             }

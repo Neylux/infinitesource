@@ -27,13 +27,6 @@ public class InfiniteWaterSourceBlock extends BaseEntityBlock {
         return new InfiniteWaterBlockEntity(blockPos, blockState);
     }
 
-    /* TODO: Don't really need ticker (only for push configuration)
-    @Override
-    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, BlockEntityType<T> type) {
-        return createTickerHelper(type,, InfiniteWaterBlockEntity::tick);
-    }
-    */
-
     @Override
     protected InteractionResult useItemOn(ItemStack heldItem, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (heldItem.is(Items.BUCKET)) {

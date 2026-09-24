@@ -95,7 +95,7 @@ public final class DataGenerators {
         @Override
         protected void addTranslations() {
             addBlock(ModBlocks.INFINITE_WATER_BLOCK, "Infinite Water Source");
-            add("itemGroup.infinitesource", "Infinite Source");
+            add("itemGroup." + InfiniteSource.MOD_ID, "Infinite Source");
         }
     }
 
